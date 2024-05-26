@@ -20,6 +20,7 @@ from wikmapp import views
 from wikmapp.views import RegisterView
 from wikmapp.views import MyTokenObtainPairView
 
+
 urlpatterns = [
     path('', views.home, name='home'),  # Define the root URL pattern and point it to the 'home' view function (Not sure if it is necessary)
     path('api/register/', RegisterView.as_view(), name='register'),
@@ -27,4 +28,7 @@ urlpatterns = [
     path('wikmapp/', include('wikmapp.urls')),
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/profile/', views.getProfile, name='profile'),
+    path('api/profile/update/', views.updateProfile, name='update-profile'),
+    path('api/set_allergy/', views.setAllergy, name='set-allergy'),
+    path('api/allergies/', views.getUserAllergies, name='user-allergies'),
 ]

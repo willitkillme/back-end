@@ -13,6 +13,8 @@ from django.utils import timezone
 from .serializers import ProfileSerializer
 from .isallergic import *
 from .GetProdData import *
+from .models import Allergy
+from .serializers import *
 # Create your views here.
 
 def getRoutes(request):
@@ -92,3 +94,30 @@ def set_img_path(request,path): #set the path for the image.
     user = request.user
     GetProdData.set_img()
     return Response("path set")
+
+#save allergy to profile
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def setAllergy(request):
+    user = request.user
+    allergy_name = request.data.get('name')
+
+    # check if allergy exists 
+    existing_allergy = Allergy.objects.filter(user=user, name=allergy_name).first()
+    if existing_allergy:
+        serializer = AllergySerializer(existing_allergy)
+        return Response(serializer.data)
+
+    # create a new row with the allergy
+    allergy = Allergy.objects.create(user=user, name=allergy_name)
+    serializer = AllergySerializer(allergy)
+    return Response(serializer.data)
+
+#get allergy from profie
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getUserAllergies(request):
+    user = request.user
+    allergies = Allergy.objects.filter(user=user)
+    serializer = AllergySerializer(allergies, many=True)
+    return Response(serializer.data)

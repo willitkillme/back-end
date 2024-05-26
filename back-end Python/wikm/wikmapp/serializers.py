@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
+from .models import Allergy
+
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -32,9 +34,16 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
-    
+
+class AllergySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Allergy
+        fields = ['id', 'user', 'name']
+
+        
 class ProfileSerializer(serializers.ModelSerializer):
+    allergies = AllergySerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ['username']
+        fields = ['username', 'allergies']
