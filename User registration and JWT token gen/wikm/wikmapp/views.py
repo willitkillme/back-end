@@ -11,7 +11,8 @@ from django.contrib.auth import authenticate
 from rest_framework import status
 from django.utils import timezone
 from .serializers import ProfileSerializer
-
+from .isallergic import *
+from .GetProdData import *
 # Create your views here.
 
 def getRoutes(request):
@@ -75,3 +76,19 @@ def updateProfile(request):
         serializer.save()
     return Response(serializer.data)
 
+
+@api_view(['POST']) 
+@permission_classes([IsAuthenticated]) 
+def checkAllergies(request):
+    user = request.user 
+    data=run() ##runs the barcode scanner and returns data associated with it.
+    allergies = check_for_allergens(data)
+    return JsonResponse({'allergies': allergies}) #returns what the user is allergic to in the product
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def set_img_path(request,path): #set the path for the image.
+    user = request.user
+    GetProdData.set_img()
+    return Response("path set")
