@@ -29,6 +29,6 @@ urlpatterns = [
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/profile/', views.getProfile, name='profile'),
     path('api/profile/update/', views.updateProfile, name='update-profile'),
-    path('api/set_allergy/', views.setAllergy, name='set-allergy'),
+    path('api/set_allergies/', views.setAllergies, name='set-allergies'),
     path('api/allergies/', views.getUserAllergies, name='user-allergies'),
 ]

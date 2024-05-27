@@ -12,9 +12,11 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['username'] = user.username
         return token
 
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password])
+        write_only=True, required=True, validators=[validate_password]
+    )
     password2 = serializers.CharField(write_only=True, required=True)
 
     class Meta:
@@ -24,7 +26,8 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError(
-                {"password": "Password fields didn't match."})
+                {"password": "Password fields didn't match."}
+            )
         return attrs
 
     def create(self, validated_data):
@@ -35,12 +38,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
 class AllergySerializer(serializers.ModelSerializer):
     class Meta:
         model = Allergy
         fields = ['id', 'user', 'name']
 
-        
+
 class ProfileSerializer(serializers.ModelSerializer):
     allergies = AllergySerializer(many=True, read_only=True)
 

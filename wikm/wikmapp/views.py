@@ -95,23 +95,28 @@ def set_img_path(request,path): #set the path for the image.
     GetProdData.set_img()
     return Response("path set")
 
-#save allergy to profile
-@api_view(['POST'])
+# Save multiple allergies to profile
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def setAllergy(request):
+def setAllergies(request):
     user = request.user
-    allergy_name = request.data.get('name')
+    allergy_names = request.data.get('allergies', [])
 
-    # check if allergy exists 
-    existing_allergy = Allergy.objects.filter(user=user, name=allergy_name).first()
-    if existing_allergy:
-        serializer = AllergySerializer(existing_allergy)
-        return Response(serializer.data)
+    if not isinstance(allergy_names, list):
+        return Response({"detail": "Allergies should be provided as a list."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # create a new row with the allergy
-    allergy = Allergy.objects.create(user=user, name=allergy_name)
-    serializer = AllergySerializer(allergy)
-    return Response(serializer.data)
+    # Delete all existing allergies for the user
+    Allergy.objects.filter(user=user).delete()
+
+    created_allergies = []
+
+    for allergy_name in allergy_names:
+        # Create a new allergy
+        allergy = Allergy.objects.create(user=user, name=allergy_name)
+        serializer = AllergySerializer(allergy)
+        created_allergies.append(serializer.data)
+
+    return Response(created_allergies, status=status.HTTP_200_OK)
 
 #get allergy from profie
 @api_view(['GET'])
