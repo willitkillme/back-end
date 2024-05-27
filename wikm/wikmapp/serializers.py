@@ -42,7 +42,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class AllergySerializer(serializers.ModelSerializer):
     class Meta:
         model = Allergy
-        fields = ['id', 'user', 'name']
+        fields = ['id', 'name']
 
 
 class ProfileSerializer(serializers.ModelSerializer):
