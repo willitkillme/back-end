@@ -1,5 +1,4 @@
-import json
-
+import requests
 ingredients = {
     "lactose": [
         "Milk", "Cream", "Butter", "Cheese (most types)", "Yogurt", "Ice cream", "Sour cream", 
@@ -50,29 +49,24 @@ ingredients = {
     ]
 }
 
-data_json = json.null
+import requests
 
-def set_data(data):
-    data_json=data
-def process_ingredient_list(data): #pass extracted info from barcode.
-    ingredients_str = data['data'][0]['ingredients_translations']['en']
-    ingredients_list = [ingredient.strip() for ingredient in ingredients_str.split(',')]
-    for i in range(len(ingredients_list)):
-        ingredients_list[i] = ingredients_list[i].replace('.', '')
-    return ingredients_list
-
-def check_for_allergens(user): #pass what the user is allergic to
-    #could optimize further because its ->
-    # -> unnecessary to check those key value pairs where the user isn't allergic but will do for now
-    allergictto=[]
-    data = json.loads(data_json)
-    ing_list=process_ingredient_list(data)
+def GetProdData(barcode):
+    headers = {
+        "Authorization": 'Token a769dd89b0a61ab6ec841ef69b790557'  # API token
+    }
     
-    for ingredient in ing_list:
-        for allergen, items in ingredients.items():
-            for item in items:
-                if ingredient.lower() == item.lower():
-                    allergictto.append(allergen)
-    return allergictto
+    response = requests.get(f'https://www.foodrepo.org/api/v3/products?excludes=images%2Cnutrients&barcodes={barcode}', headers=headers)
+    data = response.json()
+    
+    ingredients = []
+    if data and 'data' in data and data['data']:
+        for item in data['data']:
+            ingredients_translation = item.get('ingredients_translations', {}).get('en', None)
+            if ingredients_translation:
+                ingredients.append(ingredients_translation)
 
-print(check_for_allergens("asdf"))
+    return ingredients
+
+
+#NOTE: IDE ÚJ FUNCTION

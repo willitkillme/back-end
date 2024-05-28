@@ -15,6 +15,9 @@ from .isallergic import *
 from .GetProdData import *
 from .models import Allergy
 from .serializers import *
+from django.http import JsonResponse
+from .prodFunctions import GetProdData
+
 # Create your views here.
 
 def getRoutes(request):
@@ -79,21 +82,18 @@ def updateProfile(request):
     return Response(serializer.data)
 
 
-@api_view(['POST']) 
-@permission_classes([IsAuthenticated]) 
-def checkAllergies(request):
-    user = request.user 
-    data=run() ##runs the barcode scanner and returns data associated with it.
-    allergies = check_for_allergens(data)
-    return JsonResponse({'allergies': allergies}) #returns what the user is allergic to in the product
 
-
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def set_img_path(request,path): #set the path for the image.
+def checkAllergies(request):
     user = request.user
-    GetProdData.set_img()
-    return Response("path set")
+    data = json.loads(request.body.decode('utf-8'))  # Assuming JSON data is sent in the request body
+    barcode = data.get('barcode', '')  # Retrieve barcode from JSON data
+    prodData = GetProdData(barcode)
+    
+    return Response(prodData)
+
+
 
 # Save multiple allergies to profile
 @api_view(['PUT'])
@@ -126,3 +126,4 @@ def getUserAllergies(request):
     allergies = Allergy.objects.filter(user=user)
     serializer = AllergySerializer(allergies, many=True)
     return Response(serializer.data)
+

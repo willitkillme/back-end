@@ -31,4 +31,7 @@ urlpatterns = [
     path('api/profile/update/', views.updateProfile, name='update-profile'),
     path('api/set_allergies/', views.setAllergies, name='set-allergies'),
     path('api/allergies/', views.getUserAllergies, name='user-allergies'),
+    path('api/checkAllergies/', views.checkAllergies, name='check-allergies'),
+    
+    
 ]
