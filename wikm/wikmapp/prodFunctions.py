@@ -58,7 +58,7 @@ def GetProdData(barcode):
     data = response.json()
     
     all_ingredients = []  # List to store all ingredient lists
-    
+    name=""
     if data and 'data' in data and data['data']:
         for item in data['data']:
             ingredients_translation = item.get('ingredients_translations', {}).get('en', None)
@@ -81,8 +81,12 @@ def GetProdData(barcode):
                 # Append cleaned ingredients to the list if non-empty
                 if split_ingredients:
                     all_ingredients.append(split_ingredients)
+            name_translation = item.get('name_translations', {}).get('en', None)
+            if name_translation:
+                name=name_translation
+
     
-    return all_ingredients
+    return all_ingredients,name
 
 
 #NOTE: IDE ÚJ FUNCTION

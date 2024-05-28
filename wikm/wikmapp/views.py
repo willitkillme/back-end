@@ -86,16 +86,21 @@ def updateProfile(request):
 @permission_classes([IsAuthenticated])
 def checkAllergies(request):
     user = request.user
-    data = json.loads(request.body.decode('utf-8'))  # Assuming JSON data is sent in the request body
-    barcode = data.get('barcode', '')  # Retrieve barcode from JSON data
-    prodData = GetProdData(barcode)
-    
+    barcode = str(request.query_params.get('barcode', ''))
+
+    if len(barcode) < 13:
+        zeros_needed = 13 - len(barcode)
+        barcode =  '0' * zeros_needed+barcode
+
+    prodData,name = GetProdData(barcode)    
     
     allergies = Allergy.objects.filter(user=user)
     allergy_names = [allergy.name for allergy in allergies]
 
     matches=check_for_allergens(prodData,allergy_names)
     return Response({
+        "product_name":name,
+        "barcode":barcode,
         "product_data": prodData,
         "alergy_names":allergy_names,
         "allergen_matches": matches
