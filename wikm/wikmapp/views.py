@@ -11,13 +11,12 @@ from django.contrib.auth import authenticate
 from rest_framework import status
 from django.utils import timezone
 from .serializers import ProfileSerializer
-from .isallergic import *
 from .GetProdData import *
 from .models import Allergy
 from .serializers import *
 from django.http import JsonResponse
-from .prodFunctions import GetProdData
-
+from .prodFunctions import GetProdData,check_for_allergens
+import json
 # Create your views here.
 
 def getRoutes(request):
@@ -91,7 +90,16 @@ def checkAllergies(request):
     barcode = data.get('barcode', '')  # Retrieve barcode from JSON data
     prodData = GetProdData(barcode)
     
-    return Response(prodData)
+    
+    allergies = Allergy.objects.filter(user=user)
+    allergy_names = [allergy.name for allergy in allergies]
+
+    matches=check_for_allergens(prodData,allergy_names)
+    return Response({
+        "product_data": prodData,
+        "alergy_names":allergy_names,
+        "allergen_matches": matches
+    })
 
 
 

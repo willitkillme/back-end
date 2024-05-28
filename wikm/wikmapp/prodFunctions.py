@@ -47,6 +47,7 @@ ingredients = {
 }
 
 import requests
+import re
 
 def GetProdData(barcode):
     headers = {
@@ -56,26 +57,35 @@ def GetProdData(barcode):
     response = requests.get(f'https://www.foodrepo.org/api/v3/products?excludes=images%2Cnutrients&barcodes={barcode}', headers=headers)
     data = response.json()
     
-    ingredients = []
+    all_ingredients = []  # List to store all ingredient lists
+    
     if data and 'data' in data and data['data']:
         for item in data['data']:
             ingredients_translation = item.get('ingredients_translations', {}).get('en', None)
             if ingredients_translation:
-                ingredients.append(ingredients_translation)
-
-    return ingredients
+                # Use regular expressions to remove all non-letter characters except comma
+                cleaned_ingredients = re.sub(r'[^a-zA-Z,\s]', '', ingredients_translation)
+                cleaned_ingredients = cleaned_ingredients.replace('\r\n', '')
+                cleaned_ingredients = cleaned_ingredients.replace('May contain traces of', ', ')
+                cleaned_ingredients = cleaned_ingredients.replace('contains  or less of ', ', ')
+                # Fix spaces: Replace consecutive spaces with a single space
+                cleaned_ingredients = re.sub(r'\s+', ' ', cleaned_ingredients)
+                # Fix spaces: Remove leading and trailing spaces
+                cleaned_ingredients = cleaned_ingredients.strip()
+                # Remove empty strings
+                cleaned_ingredients = cleaned_ingredients.replace(',,', ',')
+                # Split cleaned ingredients by comma
+                split_ingredients = [ingredient.strip().lower() for ingredient in cleaned_ingredients.split(',')]
+                # Filter out lists with only empty strings
+                split_ingredients = [ingredient_list for ingredient_list in split_ingredients if ingredient_list]
+                # Append cleaned ingredients to the list if non-empty
+                if split_ingredients:
+                    all_ingredients.append(split_ingredients)
+    
+    return all_ingredients
 
 
 #NOTE: IDE ÚJ FUNCTION
-
-data_json = None
-
-def _process_ingredient_list(data): #pass extracted info from barcode.
-    ingredients_str = data['data'][0]['ingredients_translations']['en']
-    ingredients_list = [ingredient.strip() for ingredient in ingredients_str.split(',')]
-    for i in range(len(ingredients_list)):
-        ingredients_list[i] = ingredients_list[i].replace('.', '')
-    return ingredients_list
 
 def _compute_lps_array(pattern):
     m = len(pattern)
@@ -100,7 +110,7 @@ def _kmp_search(text, pattern):
     n = len(text)
     m = len(pattern)
 
-    lps = compute_lps_array(pattern)
+    lps = _compute_lps_array(pattern)
     
     i = 0 
     j = 0 
@@ -111,7 +121,6 @@ def _kmp_search(text, pattern):
             j += 1
         
         if j == m:
-            #print("GAY")
             return True
         
         elif i < n and pattern[j] != text[i]:
@@ -121,16 +130,15 @@ def _kmp_search(text, pattern):
                 i += 1
     return False
 
-def check_for_allergens(data_json,user_allergy):
-    allergictto=[]
-    data = json.loads(data_json)
-    ing_list=process_ingredient_list(data)
-    
-    for ingredient in ing_list:
-        for allergen, items in ingredients.items():
-            for item in items:
-                #if ingredient.lower() == item.lower():
-                if _kmp_search(item.lower(),ingredient.lower()): ##comment out if dont work, untested shi
-                    allergictto.append(allergen)
+def check_for_allergens(ing_list, user_allergy):
+    allergictto = set()
 
-    return [item for item in allergictto if item in user_allergy]
+    for ingredient_list in ing_list:
+        for ingredient in ingredient_list:
+            ingredient = str(ingredient)
+            for allergen, items in ingredients.items():
+                for item in items:
+                    if _kmp_search(item.lower(), ingredient.lower()):
+                        allergictto.add(allergen)
+    
+    return list(allergictto.intersection(user_allergy))
