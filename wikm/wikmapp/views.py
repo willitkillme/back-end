@@ -90,21 +90,31 @@ def checkAllergies(request):
         zeros_needed = 13 - len(barcode)
         barcode =  '0' * zeros_needed+barcode
 
-    prodData,name = GetProdData(barcode)    
+    prodData,name,all_nutrients = GetProdData(barcode)    
     
     allergies = Allergy.objects.filter(user=user)
     allergy_names = [allergy.name for allergy in allergies]
 
     matches=check_for_allergens(prodData,allergy_names)
+    
+    
+    child_matches = []
+    for child in user.children.all():
+        child_allergies = [allergy.name for allergy in child.allergies.all()]
+        child_match = check_for_allergens(prodData, child_allergies)
+        child_matches.append({"child_name": child.name, "matches": child_match})
+    
+    
     return Response({
         "product_name":name,
         "barcode":barcode,
         "product_data": prodData,
+        "nutrients":all_nutrients,
         "alergy_names":allergy_names,
-        "allergen_matches": matches
+        "allergen_matches": matches,
+        "child_matches": child_matches
     })
 
- # Save multiple allergies to profile
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def setAllergies(request):
@@ -136,30 +146,51 @@ def getUserAllergies(request):
     return Response(serializer.data)
 
 
-@api_view(['PUT'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def setChildren(request):
     user = request.user
-    children_data = request.data.get('children', [])
+    name = request.data.get('name')
+    allergies_data = request.data.get('allergies', [])
 
-    if not isinstance(children_data, list):
-        return Response({"detail": "Children should be provided as a list."}, status=status.HTTP_400_BAD_REQUEST)
+    if not name:
+        return Response({"detail": "Child name is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Delete all existing children for the user
-    Child.objects.filter(parent=user).delete()
+    if allergies_data and not isinstance(allergies_data, list):
+        return Response({"detail": "Allergies should be provided as a list."}, status=status.HTTP_400_BAD_REQUEST)
 
-    created_children = []
+    # Create the new child
+    child = Child.objects.create(name=name, parent=user)
 
-    for child_data in children_data:
-        serializer = ChildSerializer(data=child_data)
-        if serializer.is_valid():
-            # Create a new child, setting the parent to the current user
-            serializer.save(parent=user)
-            created_children.append(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    created_allergies = []
+    if allergies_data:
+        for allergy_data in allergies_data:
+            # Create a new allergy for the child
+            allergy = Allergy.objects.create(child=child, name=allergy_data['name'])
+            allergy_serializer = AllergySerializer(allergy)
+            created_allergies.append(allergy_serializer.data)
 
-    return Response(created_children, status=status.HTTP_200_OK)
+    child_serializer = ChildSerializer(child)
+    response_data = child_serializer.data
+    response_data['allergies'] = created_allergies
+
+    return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def deleteChildren(request, child_id):
+    user = request.user
+
+    try:
+        child = Child.objects.get(id=child_id, parent=request.user)
+    except Child.DoesNotExist:
+        return Response({"detail": "Child not found or does not belong to the authenticated user."}, status=status.HTTP_404_NOT_FOUND)
+
+    Allergy.objects.filter(child=child).delete()
+    child.delete()
+
+    return Response({"detail": "Child deleted successfully."}, status=status.HTTP_202_ACCEPTED)
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])

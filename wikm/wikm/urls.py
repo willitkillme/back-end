@@ -35,4 +35,5 @@ urlpatterns = [
     path('api/checkAllergies/', views.checkAllergies, name='check-allergies'),
     path('api/set-children/', views.setChildren, name='set-children'),
     path('api/children/<int:child_id>/set_allergies/', views.setChildAllergy, name='add-child-allergy'),
+    path('api/delete-children/<int:child_id>', views.deleteChildren, name='delete-children'),
 ]

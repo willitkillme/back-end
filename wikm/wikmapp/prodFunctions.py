@@ -54,11 +54,13 @@ def GetProdData(barcode):
         "Authorization": 'Token a769dd89b0a61ab6ec841ef69b790557'  # API token
     }
     
-    response = requests.get(f'https://www.foodrepo.org/api/v3/products?excludes=images%2Cnutrients&barcodes={barcode}', headers=headers)
+    response = requests.get(f'https://www.foodrepo.org/api/v3/products?excludes=images&barcodes={barcode}', headers=headers)
     data = response.json()
     
     all_ingredients = []  # List to store all ingredient lists
+    all_nutrients = []
     name=""
+    
     if data and 'data' in data and data['data']:
         for item in data['data']:
             ingredients_translation = item.get('ingredients_translations', {}).get('en', None)
@@ -81,13 +83,29 @@ def GetProdData(barcode):
                 # Append cleaned ingredients to the list if non-empty
                 if split_ingredients:
                     all_ingredients.append(split_ingredients)
+                    
+                    
+                    
+            nutrient_info = item.get('nutrients', {})
+            if nutrient_info:
+            # Process each nutrient
+                for nutrient_key, nutrient_data in nutrient_info.items():
+                    nutrient_name = nutrient_data.get('name_translations', {}).get('en', '')
+                    nutrient_per_portion = nutrient_data.get('per_portion', None)
+                    nutrient_unit = nutrient_data.get('unit', '')
+                    if nutrient_name and nutrient_per_portion is not None:
+                        nutrient_string = f"{nutrient_name} {nutrient_per_portion} {nutrient_unit}"
+                        all_nutrients.append(nutrient_string)
+                        
+                    
             name_translation = item.get('name_translations', {}).get('en', None)
             if name_translation:
                 name=name_translation
+                
+
 
     
-    return all_ingredients,name
-
+    return all_ingredients,name,all_nutrients
 
 #NOTE: IDE ÚJ FUNCTION
 
