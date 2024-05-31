@@ -57,7 +57,7 @@ def GetProdData(barcode):
     response = requests.get(f'https://www.foodrepo.org/api/v3/products?excludes=images&barcodes={barcode}', headers=headers)
     data = response.json()
     
-    all_ingredients = []  # List to store all ingredient lists
+    all_ingredients = []
     all_nutrients = []
     name=""
     
@@ -65,22 +65,15 @@ def GetProdData(barcode):
         for item in data['data']:
             ingredients_translation = item.get('ingredients_translations', {}).get('en', None)
             if ingredients_translation:
-                # Use regular expressions to remove all non-letter characters except comma
                 cleaned_ingredients = re.sub(r'[^a-zA-Z,\s]', '', ingredients_translation)
                 cleaned_ingredients = cleaned_ingredients.replace('\r\n', '')
                 cleaned_ingredients = cleaned_ingredients.replace('May contain traces of', ', ')
-                cleaned_ingredients = cleaned_ingredients.replace('contains  or less of ', ', ')
-                # Fix spaces: Replace consecutive spaces with a single space
+                cleaned_ingredients = cleaned_ingredients.replace('contains more or less of ', ', ')
                 cleaned_ingredients = re.sub(r'\s+', ' ', cleaned_ingredients)
-                # Fix spaces: Remove leading and trailing spaces
                 cleaned_ingredients = cleaned_ingredients.strip()
-                # Remove empty strings
                 cleaned_ingredients = cleaned_ingredients.replace(',,', ',')
-                # Split cleaned ingredients by comma
                 split_ingredients = [ingredient.strip().lower() for ingredient in cleaned_ingredients.split(',')]
-                # Filter out lists with only empty strings
                 split_ingredients = [ingredient_list for ingredient_list in split_ingredients if ingredient_list]
-                # Append cleaned ingredients to the list if non-empty
                 if split_ingredients:
                     all_ingredients.append(split_ingredients)
                     
@@ -88,7 +81,6 @@ def GetProdData(barcode):
                     
             nutrient_info = item.get('nutrients', {})
             if nutrient_info:
-            # Process each nutrient
                 for nutrient_key, nutrient_data in nutrient_info.items():
                     nutrient_name = nutrient_data.get('name_translations', {}).get('en', '')
                     nutrient_per_portion = nutrient_data.get('per_portion', None)
@@ -106,8 +98,6 @@ def GetProdData(barcode):
 
     
     return all_ingredients,name,all_nutrients
-
-#NOTE: IDE ÚJ FUNCTION
 
 def _compute_lps_array(pattern):
     m = len(pattern)
