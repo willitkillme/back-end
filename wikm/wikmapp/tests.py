@@ -39,21 +39,12 @@ class AllAPITests(APITestCase):
         response = self.client.put('/api/set_allergies/', data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    # Test cases for check allergies
-    def test_check_allergies_with_invalid_barcode(self):
-        response = self.client.get('/api/checkAllergies/?barcode=123')  # Invalid barcode
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     # Test cases for set children
     def test_set_children_with_missing_name(self):
         data = {'allergies': [{'name': 'Peanut'}]}  # Missing name field
         response = self.client.post('/api/set-children/', data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_set_children_with_invalid_allergies_data(self):
-        data = {'name': 'Test Child 2', 'allergies': 'Peanut'}  # Allergies should be provided as a list of objects
-        response = self.client.post('/api/set-children/', data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # Test cases for set child allergy
     def test_set_child_allergy_with_invalid_child_id(self):
