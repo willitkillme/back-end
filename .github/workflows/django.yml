@@ -15,6 +15,17 @@ jobs:
       matrix:
         python-version: [3.12.2]
 
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_DB: wikm
+          POSTGRES_USER: ati
+          POSTGRES_PASSWORD: 123
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -28,7 +39,10 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install -r requirements.txt
-    - name: Run Tests
+    - name: Run Migrations
       run: |
         cd wikm
+        python manage.py migrate
+    - name: Run Tests
+      run: |
         python manage.py test
