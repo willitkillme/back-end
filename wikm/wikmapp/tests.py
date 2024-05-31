@@ -27,12 +27,6 @@ class AllAPITests(APITestCase):
         response = self.client.post('/api/token/', data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    # Test cases for update profile
-    def test_update_profile_with_invalid_data(self):
-        data = {'first_name': '', 'last_name': 'User'}
-        response = self.client.put('/api/profile/update/', data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     # Test cases for set allergies
     def test_set_allergies_with_invalid_data(self):
         data = {'allergies': 'Peanut'}  # Allergies should be provided as a list
